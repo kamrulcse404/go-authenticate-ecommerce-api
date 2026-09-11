@@ -4,6 +4,7 @@ import (
 	"ecommerce-api/internal/platform/cache"
 	"ecommerce-api/internal/platform/config"
 	"ecommerce-api/internal/platform/database"
+	"ecommerce-api/internal/platform/middleware"
 	"ecommerce-api/internal/platform/response"
 	"fmt"
 	"log"
@@ -37,6 +38,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	handler := middleware.Logger(mux)
+	handler = middleware.Recovery(handler)
+
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusOK, "service is healthy", map[string]string{
 			"status": "ok",
@@ -47,7 +51,7 @@ func main() {
 
 	log.Printf("server running on %s", address)
 
-	err = http.ListenAndServe(address, mux)
+	err = http.ListenAndServe(address, handler)
 	if err != nil {
 		log.Fatal(err)
 	}
