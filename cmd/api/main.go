@@ -47,6 +47,10 @@ func main() {
 		})
 	})
 
+	mux.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("test panic")
+	})
+
 	address := fmt.Sprintf(":%s", cfg.Server.Port)
 
 	log.Printf("server running on %s", address)
