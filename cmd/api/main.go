@@ -4,6 +4,7 @@ import (
 	"ecommerce-api/internal/platform/cache"
 	"ecommerce-api/internal/platform/config"
 	"ecommerce-api/internal/platform/database"
+	"ecommerce-api/internal/platform/response"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,9 +38,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		response.JSON(w, http.StatusOK, "service is healthy", map[string]string{
+			"status": "ok",
+		})
 	})
 
 	address := fmt.Sprintf(":%s", cfg.Server.Port)
