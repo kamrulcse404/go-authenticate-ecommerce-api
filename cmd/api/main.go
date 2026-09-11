@@ -2,6 +2,7 @@ package main
 
 import (
 	"ecommerce-api/internal/platform/config"
+	"ecommerce-api/internal/platform/database"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +14,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	db, err := database.Connect(cfg.Database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	log.Println("postgres connected successfully")
 
 	mux := http.NewServeMux()
 
