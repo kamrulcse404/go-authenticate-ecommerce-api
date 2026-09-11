@@ -38,6 +38,21 @@ services:
     networks:
       - ecommerce-network
 
+  migrate: 
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path=/migrations",
+        "-database",
+        "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}"
+      ]
+    depends_on:
+      - postgres
+    networks:
+      - ecommerce-network
 
 volumes:
   postgres_data:
