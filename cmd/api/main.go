@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ecommerce-api/internal/platform/cache"
 	"ecommerce-api/internal/platform/config"
 	"ecommerce-api/internal/platform/database"
 	"fmt"
@@ -23,6 +24,15 @@ func main() {
 	defer db.Close()
 
 	log.Println("postgres connected successfully")
+
+	redisClient, err := cache.Connect(cfg.Redis)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer redisClient.Close()
+
+	log.Println("redis connected successfully")
 
 	mux := http.NewServeMux()
 
