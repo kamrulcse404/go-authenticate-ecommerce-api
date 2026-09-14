@@ -47,7 +47,8 @@ services:
         "migrate",
         "-path=/migrations",
         "-database",
-        "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}"
+        "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}",
+        "up"
       ]
     depends_on:
       - postgres

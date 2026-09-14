@@ -6,9 +6,12 @@ import (
 	"ecommerce-api/internal/platform/database"
 	"ecommerce-api/internal/platform/middleware"
 	"ecommerce-api/internal/platform/response"
+	"ecommerce-api/internal/user"
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -36,26 +39,33 @@ func main() {
 
 	log.Println("redis connected successfully")
 
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	handler := middleware.Logger(mux)
-	handler = middleware.Recovery(handler)
+	r.Use(middleware.Recovery)
+	r.Use(middleware.Logger)
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		response.JSON(w, http.StatusOK, "service is healthy", map[string]string{
-			"status": "ok",
-		})
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		response.JSON(
+			w,
+			http.StatusOK,
+			"service is healthy",
+			map[string]string{
+				"status": "ok",
+			},
+		)
 	})
 
-	mux.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
-		panic("test panic")
-	})
+	userRepo := user.NewRepository(db)
+	userService := user.NewService(userRepo)
+	userHandler := user.NewHandler(userService)
+
+	r.Mount("/users", user.Routes(userHandler))
 
 	address := fmt.Sprintf(":%s", cfg.Server.Port)
 
 	log.Printf("server running on %s", address)
 
-	err = http.ListenAndServe(address, handler)
+	err = http.ListenAndServe(address, r)
 	if err != nil {
 		log.Fatal(err)
 	}
