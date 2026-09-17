@@ -1,19 +1,4 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ecommerce-api
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - ecommerce-network
-
   postgres:
     image: postgres:16
     container_name: ecommerce-postgres
@@ -27,6 +12,16 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ecommerce-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -37,28 +32,54 @@ services:
       - redis_data:/data
     networks:
       - ecommerce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  migrate: 
+  migrate:
     image: migrate/migrate
+    container_name: ecommerce-migrate
     volumes:
       - ./migrations:/migrations
-    entrypoint:
+    command:
       [
-        "migrate",
         "-path=/migrations",
         "-database",
         "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}",
         "up"
       ]
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - ecommerce-network
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - ecommerce-network
+    restart: on-failure
 
 volumes:
   postgres_data:
   redis_data:
-
 
 networks:
   ecommerce-network:

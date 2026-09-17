@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ecommerce-api/internal/auth"
 	"ecommerce-api/internal/platform/cache"
 	"ecommerce-api/internal/platform/config"
 	"ecommerce-api/internal/platform/database"
@@ -55,11 +56,19 @@ func main() {
 		)
 	})
 
+	// user mount
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
 
 	r.Mount("/users", user.Routes(userHandler))
+
+	//auth mount
+	authRepo := auth.NewRepository(db)
+	authService := auth.NewService(authRepo)
+	authHandler := auth.NewHandler(authService)
+
+	r.Mount("/auth", auth.Routes(authHandler))
 
 	address := fmt.Sprintf(":%s", cfg.Server.Port)
 
