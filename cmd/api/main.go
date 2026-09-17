@@ -6,7 +6,6 @@ import (
 	"ecommerce-api/internal/platform/config"
 	"ecommerce-api/internal/platform/database"
 	"ecommerce-api/internal/platform/middleware"
-	"ecommerce-api/internal/platform/response"
 	"ecommerce-api/internal/user"
 	"fmt"
 	"log"
@@ -44,17 +43,6 @@ func main() {
 
 	r.Use(middleware.Recovery)
 	r.Use(middleware.Logger)
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		response.JSON(
-			w,
-			http.StatusOK,
-			"service is healthy",
-			map[string]string{
-				"status": "ok",
-			},
-		)
-	})
 
 	// user mount
 	userRepo := user.NewRepository(db)

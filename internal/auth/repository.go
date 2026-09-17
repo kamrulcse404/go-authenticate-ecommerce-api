@@ -9,7 +9,15 @@ import (
 	"github.com/lib/pq"
 )
 
-var ErrEmailAlreadyExists = errors.New("email already exists")
+var (
+	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+)
+
+type UserWithPassword struct {
+	User         user.User
+	PasswordHash string
+}
 
 type Repository struct {
 	db *sql.DB
@@ -67,4 +75,47 @@ func (r *Repository) CreateUser(ctx context.Context, name string, email string, 
 	}
 
 	return &u, nil
+}
+
+func (r *Repository) FindByEmail(ctx context.Context, email string) (*UserWithPassword, error) {
+	query := `
+		SELECT 
+			id,
+			name,
+			email,
+			password_hash,
+			role,
+			status,
+			email_verified,
+			created_at,
+			updated_at
+		FROM users
+		WHERE email = $1
+	`
+
+	var result UserWithPassword
+
+	err := r.db.QueryRowContext(
+		ctx,
+		query,
+		email,
+	).Scan(
+		&result.User.ID,
+		&result.User.Name,
+		&result.User.Email,
+		&result.PasswordHash,
+		&result.User.Role,
+		&result.User.Status,
+		&result.User.EmailVerified,
+		&result.User.CreatedAt,
+		&result.User.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+	return &result, nil
 }

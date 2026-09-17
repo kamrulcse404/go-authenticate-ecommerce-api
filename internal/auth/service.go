@@ -53,3 +53,27 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (*user.User
 
 	return s.repo.CreateUser(ctx, req.Name, req.Email, passwordHash)
 }
+
+func (s *Service) Login(ctx context.Context, req LoginRequest) (*user.User, error) {
+	req.Email = strings.TrimSpace(req.Email)
+
+	if req.Email == "" {
+		return nil, ErrEmailRequired
+	}
+
+	if req.Password == "" {
+		return nil, ErrPasswordRequired
+	}
+
+	userWithPass, err := s.repo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = security.ComparePassword(req.Password, userWithPass.PasswordHash)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return &userWithPass.User, nil
+}
