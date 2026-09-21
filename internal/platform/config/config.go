@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 type DatabaseConfig struct {
@@ -20,7 +21,8 @@ type RedisConfig struct {
 }
 
 type JWTConfig struct {
-	Secret string
+	Secret         string
+	AccessTokenTTL time.Duration
 }
 
 type ServerConfig struct {
@@ -52,7 +54,8 @@ func Load() (*Config, error) {
 			Port: os.Getenv("REDIS_PORT"),
 		},
 		JWT: JWTConfig{
-			Secret: os.Getenv("JWT_SECRET"),
+			Secret:         os.Getenv("JWT_SECRET"),
+			AccessTokenTTL: 15 * time.Minute,
 		},
 	}
 

@@ -6,6 +6,7 @@ import (
 	"ecommerce-api/internal/platform/config"
 	"ecommerce-api/internal/platform/database"
 	"ecommerce-api/internal/platform/middleware"
+	"ecommerce-api/internal/platform/security"
 	"ecommerce-api/internal/user"
 	"fmt"
 	"log"
@@ -53,7 +54,13 @@ func main() {
 
 	//auth mount
 	authRepo := auth.NewRepository(db)
-	authService := auth.NewService(authRepo)
+
+	jwtManager := security.NewJWTManager(
+		cfg.JWT.Secret,
+		cfg.JWT.AccessTokenTTL,
+	)
+
+	authService := auth.NewService(authRepo, jwtManager)
 	authHandler := auth.NewHandler(authService)
 
 	r.Mount("/auth", auth.Routes(authHandler))

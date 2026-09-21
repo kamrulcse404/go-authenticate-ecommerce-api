@@ -16,12 +16,14 @@ var (
 )
 
 type Service struct {
-	repo *Repository
+	repo       *Repository
+	jwtManager *security.JWTManager
 }
 
-func NewService(repo *Repository) *Service {
+func NewService(repo *Repository, jwtManager *security.JWTManager) *Service {
 	return &Service{
-		repo: repo,
+		repo:       repo,
+		jwtManager: jwtManager,
 	}
 }
 
@@ -54,7 +56,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (*user.User
 	return s.repo.CreateUser(ctx, req.Name, req.Email, passwordHash)
 }
 
-func (s *Service) Login(ctx context.Context, req LoginRequest) (*user.User, error) {
+func (s *Service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, error) {
 	req.Email = strings.TrimSpace(req.Email)
 
 	if req.Email == "" {
@@ -75,5 +77,13 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*user.User, erro
 		return nil, ErrInvalidCredentials
 	}
 
-	return &userWithPass.User, nil
+	token, err := s.jwtManager.GenerateAccessToken(userWithPass.User.ID, userWithPass.User.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResponse{
+		AccessToken: token,
+		User:        userWithPass.User,
+	}, nil
 }
