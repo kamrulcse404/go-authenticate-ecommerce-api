@@ -46,3 +46,24 @@ func (m *JWTManager) GenerateAccessToken(userID int64, role string) (string, err
 
 	return token.SignedString(m.secret)
 }
+
+func (m *JWTManager) ValidateAccessToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&Claims{},
+		func(token *jwt.Token) (any, error) {
+			return m.secret, nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	return claims, nil
+}
